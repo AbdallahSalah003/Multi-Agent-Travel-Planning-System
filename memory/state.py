@@ -9,4 +9,5 @@ class TravelState(TypedDict):
     flight_results: str
     hotel_results: str
     itinerary: str
+    weather_results: str
     llm_calls: int
