@@ -4,24 +4,15 @@ from langchain_core.messages import (
     SystemMessage,
     HumanMessage
 )
-
+from prompts.itinerary import ITINERARY_AGENT_PROMPT
 
 
 def itinerary_agent(state: TravelState):
-    prompt = f"""
-Create a complete travel itinerary.
-
-User Query:
-{state['user_query']}
-
-Flight Results:
-{state['flight_results']}
-
-Hotel Results:
-{state['hotel_results']}
-
-Make the itinerary practical, budget-aware, and easy to follow.
-"""
+    prompt = ITINERARY_AGENT_PROMPT.format(
+        user_query=state["user_query"],
+        flight_results=state["flight_results"],
+        hotel_results=state["hotel_results"]
+    )
 
     response = llm.invoke([
         SystemMessage(content="You are an expert travel planner."),
