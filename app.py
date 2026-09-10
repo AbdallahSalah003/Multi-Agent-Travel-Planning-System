@@ -1,20 +1,39 @@
 import traceback
 import uvicorn
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from pathlib import Path
-from backend import run_travel_planner
+from backend import build_graph, run_travel_planner
 
 
 BASE_DIR = Path(__file__).resolve().parent
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting application...")
+    print("Building LangGraph...")
+
+    app.state.graph, app.state.db_conn = await build_graph()
+
+    print("LangGraph initialized successfully.")
+
+    yield
+
+    print("Shutting down application...")
+
+    await app.state.db_conn.close()
+
+    print("Database connection closed.")
+
 app = FastAPI(
     title="Multi-Agent Travel Planning API",
     description="Your helpful travel planning assistant.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 
@@ -60,7 +79,8 @@ async def travel_planner(request_data: TravelRequest):
                 }
             )
 
-        result = run_travel_planner(
+        result = await run_travel_planner(
+            graph=app.state.graph,
             user_input=user_message,
             thread_id=request_data.thread_id
         )
