@@ -1,30 +1,24 @@
-import asyncio
 from memory.state import TravelState
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from core.llm import llm
-from mcp.client import aviation_mcp_call
+from mcp_pkg.client import aviation_mcp_call
 from prompts.flight import FLIGHT_AGENT_PROMPT
 
 
-def flight_agent(state: TravelState):
+async def flight_agent(state: TravelState):
     print("\nINSIDE FLIGHT AGENT\n")
 
     query = state["user_query"]
 
     try:
 
-        airports = asyncio.run(
-            aviation_mcp_call(
+        airports = await aviation_mcp_call(
                 "list_airports"
             )
-        )
 
-        airlines = asyncio.run(
-            aviation_mcp_call(
+        airlines = await aviation_mcp_call(
                 "list_airlines"
             )
-        )
-
 
         print("\nAIRPORTS:", airports)
         print("\nAIRLINES:", airlines)
@@ -35,7 +29,7 @@ def flight_agent(state: TravelState):
             airline_data=str(airlines)[:3000]
         )
 
-        response = llm.invoke([
+        response = await llm.ainvoke([
             SystemMessage(
                 content="You are an expert travel flight planner."
             ),

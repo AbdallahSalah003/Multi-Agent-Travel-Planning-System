@@ -6,7 +6,7 @@ from langchain_core.messages import (
 )
 from prompts.final_agent import FINAL_AGENT_PROMPT
 
-def final_agent(state: TravelState):
+async def final_agent(state: TravelState):
     prompt = FINAL_AGENT_PROMPT.format(
         user_query=state["user_query"],
         flight_results=state["flight_results"],
@@ -14,7 +14,7 @@ def final_agent(state: TravelState):
         weather_results=state["weather_results"],
         itinerary=state["itinerary"]
     )
-    response = llm.invoke([
+    response = await llm.ainvoke([
         SystemMessage(content="You are a professional AI travel booking assistant."),
         HumanMessage(content=prompt)
     ])

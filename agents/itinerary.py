@@ -7,14 +7,14 @@ from langchain_core.messages import (
 from prompts.itinerary import ITINERARY_AGENT_PROMPT
 
 
-def itinerary_agent(state: TravelState):
+async def itinerary_agent(state: TravelState):
     prompt = ITINERARY_AGENT_PROMPT.format(
         user_query=state["user_query"],
         flight_results=state["flight_results"],
         hotel_results=state["hotel_results"]
     )
 
-    response = llm.invoke([
+    response = await llm.ainvoke([
         SystemMessage(content="You are an expert travel planner."),
         HumanMessage(content=prompt)
     ])

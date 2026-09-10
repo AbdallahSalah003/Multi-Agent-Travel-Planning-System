@@ -1,7 +1,7 @@
 import os
 import certifi
 from dotenv import load_dotenv
-import psycopg
+from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 
 load_dotenv()
@@ -24,10 +24,10 @@ def _get_database_url():
     return database_url
 
 
-def get_db_conn():
+async def get_db_conn():
     DATABASE_URL = _get_database_url()
 
-    conn = psycopg.connect(
+    conn = await AsyncConnection.connect(
         conninfo=DATABASE_URL,
         autocommit=True,
         row_factory=dict_row

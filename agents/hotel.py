@@ -1,11 +1,10 @@
-import asyncio
 from memory.state import TravelState
 from langchain_core.messages import AIMessage
-from mcp.client import tavily_mcp_search
+from mcp_pkg.client import tavily_mcp_search
 
-def hotel_agent(state: TravelState):
+async def hotel_agent(state: TravelState):
     query = f"Best hotels for {state['user_query']}"
-    hotel_results = asyncio.run(tavily_mcp_search(query))
+    hotel_results = await tavily_mcp_search(query)
 
     return {
         "hotel_results": hotel_results,
