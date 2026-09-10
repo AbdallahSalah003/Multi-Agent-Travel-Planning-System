@@ -21,9 +21,10 @@ Format the final answer beautifully using these sections:
 1. Trip Summary
 2. Flight Information
 3. Hotel Suggestions
-4. Day-by-Day Itinerary
-5. Estimated Budget
-6. Final Recommendations
+4. Weather Conditions 
+5. Day-by-Day Itinerary
+6. Estimated Budget
+7. Final Recommendations
 
 Important:
 - Be clear and practical.
