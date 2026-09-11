@@ -3,32 +3,91 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import (HumanMessage)
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from memory.state import TravelState
+from agents.guardrail import guardrail_agent
+from agents.supervisor import supervisor_agent
 from agents.flight import flight_agent
 from agents.hotel import hotel_agent
 from agents.weather import weather_agent
 from agents.final_agent import final_agent
 from agents.itinerary import itinerary_agent
 from core.database import get_db_conn
+from utils.agents import AGENT_ORDER, KNOWN_AGENTS
 
+GUARDRAIL_AGENT="guardrail_agent"
+SUPERVISOR_AGENT="supervisor_agent"
 FLIGHT_AGENT="flight_agent"
 HOTEL_AGENT="hotel_agent"
 WEATHER_AGENT="weather_agent"
 ITINERARY_AGENT="itinerary_agent"
 FINAL_AGENT="final_agent"
 
+
 async def build_graph():
+    def route_from_guardrail_agent(state: TravelState) -> str:
+        if not state["guardrail_allowed"]:
+            return SUPERVISOR_AGENT
+        return END
+
+    def route_from_supervisor(state: TravelState) -> str:
+        selected_agents = state["selected_agents"]
+        return selected_agents[0] if len(selected_agents)>0 else ITINERARY_AGENT
+
+    def route_from_specialist_agent(current_agent: str):
+        def route(state: TravelState) -> str:
+            index = AGENT_ORDER.index(current_agent)
+            for next_agent in AGENT_ORDER[index + 1:]:
+                if next_agent in state["selected_agents"]:
+                    return next_agent
+            return ITINERARY_AGENT
+
+        return route
+
+    ROUTE_MAP = {
+        END: END,
+        GUARDRAIL_AGENT: GUARDRAIL_AGENT,
+        SUPERVISOR_AGENT: SUPERVISOR_AGENT,
+        FLIGHT_AGENT: FLIGHT_AGENT,
+        HOTEL_AGENT: HOTEL_AGENT,
+        WEATHER_AGENT: WEATHER_AGENT,
+        ITINERARY_AGENT: ITINERARY_AGENT,
+        FINAL_AGENT: FINAL_AGENT
+    }
 
     builder = StateGraph(TravelState)
+    builder.add_node(GUARDRAIL_AGENT, guardrail_agent)
+    builder.add_node(SUPERVISOR_AGENT, supervisor_agent)
     builder.add_node(FLIGHT_AGENT, flight_agent)
     builder.add_node(HOTEL_AGENT, hotel_agent)
     builder.add_node(WEATHER_AGENT, weather_agent)
     builder.add_node(ITINERARY_AGENT, itinerary_agent)
     builder.add_node(FINAL_AGENT, final_agent)
 
-    builder.set_entry_point(FLIGHT_AGENT)
-    builder.add_edge(FLIGHT_AGENT, HOTEL_AGENT)
-    builder.add_edge(HOTEL_AGENT, WEATHER_AGENT)
-    builder.add_edge(WEATHER_AGENT, ITINERARY_AGENT)
+    builder.set_entry_point(GUARDRAIL_AGENT)
+    builder.add_conditional_edges(
+        GUARDRAIL_AGENT, 
+        route_from_guardrail_agent, 
+        ROUTE_MAP
+    )
+    builder.add_conditional_edges(
+        SUPERVISOR_AGENT, 
+        route_from_supervisor, 
+        ROUTE_MAP
+    )
+    builder.add_conditional_edges(
+        FLIGHT_AGENT, 
+        route_from_specialist_agent(FLIGHT_AGENT), 
+        ROUTE_MAP
+    )
+    builder.add_conditional_edges(
+        HOTEL_AGENT,
+        route_from_specialist_agent(HOTEL_AGENT),
+        ROUTE_MAP 
+    )
+    builder.add_conditional_edges(
+        WEATHER_AGENT,
+        route_from_specialist_agent(WEATHER_AGENT),
+        ROUTE_MAP 
+    )
     builder.add_edge(ITINERARY_AGENT, FINAL_AGENT)
     builder.add_edge(FINAL_AGENT, END)
 
