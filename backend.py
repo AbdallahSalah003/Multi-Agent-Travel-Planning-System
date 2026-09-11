@@ -50,15 +50,11 @@ async def build_graph():
         return route
 
     ROUTE_MAP = {
-        END: END,
-        GUARDRAIL_AGENT: GUARDRAIL_AGENT,
-        SUPERVISOR_AGENT: SUPERVISOR_AGENT,
         FLIGHT_AGENT: FLIGHT_AGENT,
         HOTEL_AGENT: HOTEL_AGENT,
         WEATHER_AGENT: WEATHER_AGENT,
         BUDGET_AGENT: BUDGET_AGENT,
         ITINERARY_AGENT: ITINERARY_AGENT,
-        FINAL_AGENT: FINAL_AGENT
     }
 
     builder = StateGraph(TravelState)
@@ -76,7 +72,10 @@ async def build_graph():
     builder.add_conditional_edges(
         GUARDRAIL_AGENT, 
         route_from_guardrail_agent, 
-        ROUTE_MAP
+        {
+            END: END,
+            SUPERVISOR_AGENT: SUPERVISOR_AGENT
+        }
     )
     builder.add_conditional_edges(
         SUPERVISOR_AGENT, 
@@ -86,22 +85,36 @@ async def build_graph():
     builder.add_conditional_edges(
         FLIGHT_AGENT, 
         route_from_specialist_agent(FLIGHT_AGENT), 
-        ROUTE_MAP
+        {
+            HOTEL_AGENT: HOTEL_AGENT,
+            WEATHER_AGENT: WEATHER_AGENT,
+            BUDGET_AGENT: BUDGET_AGENT,
+            ITINERARY_AGENT: ITINERARY_AGENT,
+        } 
     )
     builder.add_conditional_edges(
         HOTEL_AGENT,
         route_from_specialist_agent(HOTEL_AGENT),
-        ROUTE_MAP 
+        {
+            WEATHER_AGENT: WEATHER_AGENT,
+            BUDGET_AGENT: BUDGET_AGENT,
+            ITINERARY_AGENT: ITINERARY_AGENT
+        } 
     )
     builder.add_conditional_edges(
         WEATHER_AGENT,
         route_from_specialist_agent(WEATHER_AGENT),
-        ROUTE_MAP 
+        {
+            BUDGET_AGENT: BUDGET_AGENT,
+            ITINERARY_AGENT: ITINERARY_AGENT
+        }
     )
     builder.add_conditional_edges(
         BUDGET_AGENT,
         route_from_specialist_agent(BUDGET_AGENT),
-        ROUTE_MAP
+        {
+            ITINERARY_AGENT: ITINERARY_AGENT
+        }
     )
     builder.add_edge(ITINERARY_AGENT, HUMAN_APPROVAL_AGENT)
     builder.add_edge(HUMAN_APPROVAL_AGENT, FINAL_AGENT)
@@ -112,7 +125,7 @@ async def build_graph():
     await checkpointer.setup()
 
     graph = builder.compile(checkpointer=checkpointer)
-
+    # graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
     return graph, conn
 
 
