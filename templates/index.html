@@ -82,6 +82,18 @@
 
         </section>
 
+        <section id="workflowSection" class="workflow-section hidden">
+          <div class="workflow-header">
+            <div>
+              <span class="eyebrow">Supervisor Agent</span>
+              <h2>Execution Plan</h2>
+            </div>
+            <span id="guardrailBadge" class="guardrail-badge">Guardrail passed</span>
+          </div>
+          <p id="supervisorReasoning" class="supervisor-reasoning"></p>
+          <div id="agentChips" class="agent-chips"></div>
+        </section>
+
         <section id="resultSection" class="result-section hidden">
 
             <div class="result-header">
@@ -106,6 +118,32 @@
                 <div id="resultBox" class="result-box"></div>
             </div>
 
+        </section>
+
+        <section id="approvalSection" class="approval-section hidden">
+          <div class="approval-icon">👤</div>
+          <div class="approval-content">
+            <span class="eyebrow">Human-in-the-Loop</span>
+            <h2>Review the draft itinerary</h2>
+            <p id="approvalRequest">
+              Approve the draft or provide feedback before the final plan is generated.
+            </p>
+        
+            <textarea
+              id="approvalFeedback"
+              class="feedback-input"
+              placeholder="Add revision feedback, for example: reduce the hotel cost and add one free day..."
+            ></textarea>
+        
+            <div class="approval-actions">
+              <button id="approveBtn" class="approve-btn" onclick="submitApproval(true)">
+                Approve & Generate Final
+              </button>
+              <button id="reviseBtn" class="revise-btn" onclick="submitApproval(false)">
+                Revise Using Feedback
+              </button>
+            </div>
+          </div>
         </section>
 
         <section id="errorBox" class="error-box hidden"></section>

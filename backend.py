@@ -1,8 +1,10 @@
 import uuid
 from langgraph.graph import StateGraph, END
+from langgraph.types import Command
 from langchain_core.messages import (HumanMessage)
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from memory.state import TravelState
+from structured_outputs.supervisor import TripConstraints
 from agents.guardrail import guardrail_agent
 from agents.supervisor import supervisor_agent
 from agents.flight import flight_agent
@@ -14,6 +16,7 @@ from agents.itinerary import itinerary_agent
 from agents.hitl import human_approval_agent
 from core.database import get_db_conn
 from utils.agents import AGENT_ORDER, KNOWN_AGENTS
+from utils.fastapi_facing import serialize_result
 
 GUARDRAIL_AGENT="guardrail_agent"
 SUPERVISOR_AGENT="supervisor_agent"
@@ -118,6 +121,7 @@ async def run_travel_planner(
     user_input: str, 
     thread_id: str | None = None,
 ):
+    """Start a new travel-planning run and pause at human approval""" 
 
     if not thread_id:
         thread_id = f"user_{uuid.uuid4().hex}"
@@ -130,29 +134,49 @@ async def run_travel_planner(
 
     result = await graph.ainvoke(
         {
-            "messages": [
-                HumanMessage(content=user_input)
-            ],
+            "messages": [HumanMessage(content=user_input)],
             "user_query": user_input,
+            "guardrail_allowed": True,
+            "guardrail_reason": "",
+            "selected_agents": [],
+            "trip_constraints": TripConstraints(),
+            "supervisor_reasoning": "",
             "flight_results": "",
             "hotel_results": "",
             "weather_results": "",
+            "budget_results": "",
             "itinerary": "",
-            "llm_calls": 0
+            "approval_request": "",
+            "approved": False,
+            "human_feedback": "",
+            "final_response": "",
+            "llm_calls": 0,
         },
         config=config
     )
-    final_answer = result["messages"][-1].content
 
-    return {
-        "thread_id": thread_id,
-        "answer": final_answer,
-        "flight_results": result.get("flight_results", ""),
-        "hotel_results": result.get("hotel_results", ""),
-        "weather_results": result.get("weather_results", ""),
-        "itinerary": result.get("itinerary", ""),
-        "llm_calls": result.get("llm_calls", 0) 
-    }
+    return serialize_result(result=result, thread_id=thread_id)
 
 
+async def resume_travel_agent(
+    graph,
+    thread_id: str,
+    approved: bool,
+    feedback: str = ""
+):
+    """Resume the paused Langgrph thread after human review"""
+    if not thread_id:
+        raise ValueError("thread_id is required to resume a travel paln.")
 
+    config = {"configurable": {"thread_id": thread_id}}
+    result = await graph.ainvoke(
+        Command(
+            resume={
+                "approved": approved,
+                "feedback": feedback.strip(),
+            }
+        ),
+        config=config
+    )
+
+    return serialize_result(result=result, thread_id=thread_id)
