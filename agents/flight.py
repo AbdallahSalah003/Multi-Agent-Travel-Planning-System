@@ -1,6 +1,6 @@
 from memory.state import TravelState
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from core.llm import llm
+from services.llm import instrumented_llm
 from mcp_pkg.client import aviation_mcp_call
 from prompts.flight import FLIGHT_AGENT_PROMPT
 
@@ -28,7 +28,7 @@ async def flight_agent(state: TravelState):
             airport_data=str(airports)[:3000],
             airline_data=str(airlines)[:3000]
         )
-
+        llm = instrumented_llm.get_llm()
         response = await llm.ainvoke([
             SystemMessage(
                 content="You are an expert travel flight planner."

@@ -6,7 +6,7 @@ from mcp_pkg.client import weather_mcp_search, forecast_mcp_search
 
 async def weather_agent(state: TravelState):
 
-    city = extract_destination(state["user_query"])
+    city = await extract_destination(state["user_query"])
 
     weather_data = await weather_mcp_search(city)
 

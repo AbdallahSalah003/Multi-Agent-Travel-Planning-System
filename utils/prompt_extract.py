@@ -1,6 +1,6 @@
-from core.llm import llm
+from services.llm import instrumented_llm
 
-def extract_destination(query: str):
+async def extract_destination(query: str):
     prompt = f"""
     Extract only the destination city or country.
 
@@ -9,7 +9,7 @@ def extract_destination(query: str):
 
     Return only destination name.
     """
-
-    response = llm.invoke(prompt)
+    llm = instrumented_llm.get_llm()
+    response = await llm.ainvoke(prompt)
 
     return response.content.strip()

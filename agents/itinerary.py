@@ -1,5 +1,5 @@
 from memory.state import TravelState
-from core.llm import llm
+from services.llm import instrumented_llm
 from langchain_core.messages import (
     SystemMessage,
     HumanMessage
@@ -13,7 +13,7 @@ async def itinerary_agent(state: TravelState):
         flight_results=state["flight_results"],
         hotel_results=state["hotel_results"]
     )
-
+    llm = instrumented_llm.get_llm()
     response = await llm.ainvoke([
         SystemMessage(content="You are an expert travel planner."),
         HumanMessage(content=prompt)
