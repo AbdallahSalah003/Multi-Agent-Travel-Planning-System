@@ -36,5 +36,6 @@ async def guardrail_agent(state: TravelState):
         ],
         "guardrail_allowed": response.allowed,
         "guardrail_reason": response.reason,
+        "final_response": "" if response.allowed == True else response.reason,
         "llm_calls": state.get("llm_calls", 0) + 1
     }
