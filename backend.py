@@ -8,8 +8,10 @@ from agents.supervisor import supervisor_agent
 from agents.flight import flight_agent
 from agents.hotel import hotel_agent
 from agents.weather import weather_agent
+from agents.budget import budget_agent
 from agents.final_agent import final_agent
 from agents.itinerary import itinerary_agent
+from agents.hitl import human_approval_agent
 from core.database import get_db_conn
 from utils.agents import AGENT_ORDER, KNOWN_AGENTS
 
@@ -18,7 +20,9 @@ SUPERVISOR_AGENT="supervisor_agent"
 FLIGHT_AGENT="flight_agent"
 HOTEL_AGENT="hotel_agent"
 WEATHER_AGENT="weather_agent"
+BUDGET_AGENT="budget_agent"
 ITINERARY_AGENT="itinerary_agent"
+HUMAN_APPROVAL_AGENT="human_approval_agent"
 FINAL_AGENT="final_agent"
 
 
@@ -49,6 +53,7 @@ async def build_graph():
         FLIGHT_AGENT: FLIGHT_AGENT,
         HOTEL_AGENT: HOTEL_AGENT,
         WEATHER_AGENT: WEATHER_AGENT,
+        BUDGET_AGENT: BUDGET_AGENT,
         ITINERARY_AGENT: ITINERARY_AGENT,
         FINAL_AGENT: FINAL_AGENT
     }
@@ -59,7 +64,9 @@ async def build_graph():
     builder.add_node(FLIGHT_AGENT, flight_agent)
     builder.add_node(HOTEL_AGENT, hotel_agent)
     builder.add_node(WEATHER_AGENT, weather_agent)
+    builder.add_node(BUDGET_AGENT, budget_agent)
     builder.add_node(ITINERARY_AGENT, itinerary_agent)
+    builder.add_node(HUMAN_APPROVAL_AGENT, human_approval_agent)
     builder.add_node(FINAL_AGENT, final_agent)
 
     builder.set_entry_point(GUARDRAIL_AGENT)
@@ -88,7 +95,13 @@ async def build_graph():
         route_from_specialist_agent(WEATHER_AGENT),
         ROUTE_MAP 
     )
-    builder.add_edge(ITINERARY_AGENT, FINAL_AGENT)
+    builder.add_conditional_edges(
+        BUDGET_AGENT,
+        route_from_specialist_agent(BUDGET_AGENT),
+        ROUTE_MAP
+    )
+    builder.add_edge(ITINERARY_AGENT, HUMAN_APPROVAL_AGENT)
+    builder.add_edge(HUMAN_APPROVAL_AGENT, FINAL_AGENT)
     builder.add_edge(FINAL_AGENT, END)
 
     conn = await get_db_conn()
