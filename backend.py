@@ -32,8 +32,8 @@ FINAL_AGENT="final_agent"
 async def build_graph():
     def route_from_guardrail_agent(state: TravelState) -> str:
         if not state["guardrail_allowed"]:
-            return SUPERVISOR_AGENT
-        return END
+            return END
+        return SUPERVISOR_AGENT
 
     def route_from_supervisor(state: TravelState) -> str:
         selected_agents = state["selected_agents"]

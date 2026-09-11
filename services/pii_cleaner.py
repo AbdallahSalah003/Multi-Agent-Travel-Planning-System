@@ -3,7 +3,6 @@ from langchain.agents.middleware import PIIMiddleware
 from langchain_core.messages import HumanMessage
 from langgraph.runtime import Runtime
 
-
 def clean_pii(text: str) -> str:
     pii_middleware = [
         PIIMiddleware(
@@ -11,7 +10,7 @@ def clean_pii(text: str) -> str:
             strategy="redact",
         ),
         PIIMiddleware(
-            "phone_number",
+            "mac_address",
             strategy="redact",
         ),
         PIIMiddleware(

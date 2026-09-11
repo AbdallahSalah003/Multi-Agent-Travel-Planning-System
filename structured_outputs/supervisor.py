@@ -12,11 +12,11 @@ AgentName = Literal[
 
 
 class TripConstraints(BaseModel):
-    destination: str = Field(description="The trip destination")
-    origin: str = Field(description="The trip origin")
-    duration: str = Field(description="The trip duration")
-    budget: str = Field(description="The user's trip budget")
-    travel_style: str = Field(description="The user's preferred travel style")
+    destination: str = Field(default="",description="The trip destination")
+    origin: str = Field(default="",description="The trip origin")
+    duration: str = Field(default="",description="The trip duration")
+    budget: str = Field(default="",description="The user's trip budget")
+    travel_style: str = Field(default="",description="The user's preferred travel style")
     special_preferences: List[str] = Field(
         default_factory=list,
         description="Any special preferences or requirements",

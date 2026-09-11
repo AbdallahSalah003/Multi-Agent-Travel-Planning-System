@@ -1,4 +1,5 @@
 from typing import Any
+from structured_outputs.supervisor import TripConstraints
 
 def _interrupt_payload(result: dict[str, Any]) -> dict[str, Any] | None:
     interrupts = result.get("__interrupt__", [])
@@ -23,6 +24,10 @@ def serialize_result(
         answer = interrupt_payload.get("draft_itinerary") or result.get(
             "itinerary", ""
         )
+    trip_constraints = result.get("trip_constraints", {})
+
+    if isinstance(trip_constraints, TripConstraints):
+        trip_constraints = trip_constraints.model_dump()
 
     return {
         "thread_id": thread_id,
@@ -43,7 +48,7 @@ def serialize_result(
             else result.get("itinerary", "")
         ),
         "selected_agents": result.get("selected_agents", []),
-        "trip_constraints": result.get("trip_constraints", {}),
+        "trip_constraints": trip_constraints,
         "supervisor_reasoning": result.get("supervisor_reasoning", ""),
         "guardrail_allowed": result.get("guardrail_allowed", True),
         "guardrail_reason": result.get("guardrail_reason", ""),
